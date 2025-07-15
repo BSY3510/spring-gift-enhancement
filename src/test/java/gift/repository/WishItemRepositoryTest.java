@@ -32,14 +32,14 @@ public class WishItemRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        // data.sql에 존재하는 member 조회
-        member = memberRepository.findByEmail("test@test.com")
-            .orElseThrow(() -> new RuntimeException("Member not found in data.sql"));
+        member = new Member("test1@test.com", "password123", "USER");
+        member = memberRepository.save(member);
 
-        product = productRepository.findById(1L)
-            .orElseThrow(() -> new RuntimeException("Product not found in data.sql"));
+        product = new Product("Test Product", 1000, "http://test.com");
+        product = productRepository.save(product);
 
         wishItem = new WishItem(product, 2, member);
+        wishItem = wishItemRepository.save(wishItem);
     }
 
     @Test
@@ -53,19 +53,10 @@ public class WishItemRepositoryTest {
     }
 
     @Test
-    void findByMember() {
-        wishItemRepository.save(wishItem);
-        List<WishItem> wishItems = wishItemRepository.findByMember(member);
-
-        assertThat(wishItems).hasSize(1);
-        assertThat(wishItems.getFirst().getQuantity()).isEqualTo(2);
-    }
-
-    @Test
     void deleteByIdAndMemberId() {
         WishItem savedWishItem = wishItemRepository.save(wishItem);
         wishItemRepository.deleteByIdAndMemberId(savedWishItem.getId(), member.getId());
-        List<WishItem> wishItems = wishItemRepository.findByMember(member);
+        List<WishItem> wishItems = member.getWishItems();
 
         assertThat(wishItems).isEmpty();
     }

@@ -73,7 +73,7 @@ public class WishServiceTest {
 
     @Test
     void getWishlistNormalCaseResponse() {
-        when(wishItemRepository.findByMember(member)).thenReturn(List.of(wishItem));
+        member.getWishItems().add(wishItem);
 
         List<WishResponse> result = wishService.getWishlist(member);
 
@@ -85,18 +85,14 @@ public class WishServiceTest {
         assertEquals(wishItem.getProduct().getName(), response.name());
         assertEquals(wishItem.getQuantity(), response.quantity());
         assertEquals(member.getId(), response.memberId());
-        verify(wishItemRepository, times(1)).findByMember(member);
     }
 
     @Test
     void getWishListNoItemsEmptyList() {
-        when(wishItemRepository.findByMember(member)).thenReturn(Collections.emptyList());
-
         List<WishResponse> result = wishService.getWishlist(member);
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
-        verify(wishItemRepository, times(1)).findByMember(member);
     }
 
     @Test
