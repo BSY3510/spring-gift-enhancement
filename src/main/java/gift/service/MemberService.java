@@ -73,24 +73,16 @@ public class MemberService {
         }
 
         String email = request.email();
-        Member existingMember = memberRepository.findByEmail(email)
+        Member member = memberRepository.findByEmail(email)
             .orElseThrow(
                 () -> new MemberNotFoundException("Member(email: " + email + " ) not found"));
 
-        String password = existingMember.getPassword();
         if (request.password() != null && !request.password().isEmpty()) {
-            password = Base64.getEncoder().encodeToString(request.password().getBytes());
+            String password = Base64.getEncoder().encodeToString(request.password().getBytes());
+            member.setPassword(password);
         }
 
-        Member updatedMember = new Member(
-            existingMember.getId(),
-            existingMember.getEmail(),
-            password,
-            existingMember.getRole()
-        );
-
-        updatedMember = memberRepository.save(updatedMember);
-        String token = jwtUtil.generateToken(updatedMember);
+        String token = jwtUtil.generateToken(member);
 
         return new TokenResponse(token);
     }
