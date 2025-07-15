@@ -163,13 +163,13 @@ public class MemberServiceTest {
             "USER"
         );
         when(memberRepository.findByEmail("test@test.com")).thenReturn(Optional.of(existingMember));
-        when(memberRepository.update(any(Member.class))).thenReturn(updatedMember);
+        when(memberRepository.save(any(Member.class))).thenReturn(updatedMember);
         when(jwtUtil.generateToken(updatedMember)).thenReturn("mocked-token");
 
         TokenResponse response = memberService.updateMember(request);
 
         assertThat(response.token()).isEqualTo("mocked-token");
-        verify(memberRepository).update(any(Member.class));
+        verify(memberRepository).save(any(Member.class));
         verify(jwtUtil).generateToken(updatedMember);
     }
 
@@ -200,7 +200,7 @@ public class MemberServiceTest {
 
         memberService.deleteMember(email);
 
-        verify(memberRepository).delete(email);
+        verify(memberRepository).deleteById(member.getId());
     }
 
     @Test

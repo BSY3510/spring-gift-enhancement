@@ -141,7 +141,7 @@ public class ProductServiceTest {
             "test.com"
         );
         when(productRepository.findById(1L)).thenReturn(Optional.of(existingProduct));
-        when(productRepository.update(any(Product.class))).thenReturn(updatedProduct);
+        when(productRepository.save(any(Product.class))).thenReturn(updatedProduct);
 
         ProductResponse response = productService.updateProduct(1L, request);
 
@@ -149,7 +149,7 @@ public class ProductServiceTest {
         assertThat(response.name()).isEqualTo("Product(2+1)");
         assertThat(response.price()).isEqualTo(1500);
         verify(productRepository).findById(1L);
-        verify(productRepository).update(any(Product.class));
+        verify(productRepository).save(any(Product.class));
     }
 
     @Test
@@ -162,7 +162,7 @@ public class ProductServiceTest {
         assertThatThrownBy(() -> productService.updateProduct(1L, request))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("상품 이름은 최대 15자까지 입력 가능합니다.");
-        verify(productRepository, never()).update(any());
+        verify(productRepository, never()).save(any());
     }
 
     @Test
@@ -175,7 +175,7 @@ public class ProductServiceTest {
         assertThatThrownBy(() -> productService.updateProduct(1L, request))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("허용되지 않은 특수 문자가 포함되었습니다.");
-        verify(productRepository, never()).update(any());
+        verify(productRepository, never()).save(any());
     }
 
     @Test
@@ -188,7 +188,7 @@ public class ProductServiceTest {
         assertThatThrownBy(() -> productService.updateProduct(1L, request))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("상품명에 '카카오'가 포함되었습니다. 담당자와 협의가 필요합니다.");
-        verify(productRepository, never()).update(any());
+        verify(productRepository, never()).save(any());
     }
 
     @Test
@@ -199,7 +199,7 @@ public class ProductServiceTest {
         productService.deleteProduct(1L);
 
         verify(productRepository).findById(1L);
-        verify(productRepository).delete(1L);
+        verify(productRepository).deleteById(1L);
     }
 
     @Test
