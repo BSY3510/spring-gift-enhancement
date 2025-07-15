@@ -21,7 +21,7 @@ public class Product {
     private Integer price;
     private String imageUrl;
 
-    @OneToMany
+    @OneToMany(mappedBy = "product")
     private List<WishItem> wishItems = new ArrayList<>();
 
     protected Product() {}
