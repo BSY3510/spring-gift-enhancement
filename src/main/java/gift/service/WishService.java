@@ -9,6 +9,7 @@ import gift.exception.ProductNotFoundException;
 import gift.repository.ProductRepository;
 import gift.repository.WishItemRepository;
 import gift.validation.ValidationUtil;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class WishService {
         this.productRepository = productRepository;
     }
 
+    @Transactional
     public List<WishResponse> getWishlist(Member member) {
         List<WishItem> wishItems = wishItemRepository.findByMember(member);
         return wishItems.stream()
@@ -37,6 +39,7 @@ public class WishService {
             .collect(Collectors.toList());
     }
 
+    @Transactional
     public WishResponse addToWishlist(WishRequest request, Member member) {
         ValidationUtil.validateWishRequestAndMember(request, member);
 
@@ -60,10 +63,11 @@ public class WishService {
         );
     }
 
+    @Transactional
     public void removeFromWishlist(Long wishId, Member member) {
         ValidationUtil.validatePIDAndMember(wishId, member);
 
-        wishItemRepository.deleteByIdAndMember(wishId, member);
+        wishItemRepository.deleteByIdAndMemberId(wishId, member.getId());
     }
 
 }

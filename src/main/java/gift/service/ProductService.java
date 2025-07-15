@@ -4,6 +4,7 @@ import gift.dto.ProductRequest;
 import gift.dto.ProductResponse;
 import gift.entity.Product;
 import gift.repository.ProductRepository;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ public class ProductService {
         }
     }
 
+    @Transactional
     public ProductResponse createProduct(ProductRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Request cannot be null");
@@ -60,6 +62,7 @@ public class ProductService {
         );
     }
 
+    @Transactional
     public ProductResponse getProduct(Long productId) {
         Product product = productRepository.findById(productId)
             .orElseThrow(
@@ -72,6 +75,7 @@ public class ProductService {
         );
     }
 
+    @Transactional
     public ProductResponse updateProduct(Long productId, ProductRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Request cannot be null");
@@ -106,7 +110,7 @@ public class ProductService {
             updatedPrice,
             updatedImageUrl
         );
-        updatedProduct = productRepository.update(updatedProduct);
+        updatedProduct = productRepository.save(updatedProduct);
         return new ProductResponse(
             updatedProduct.getId(),
             updatedProduct.getName(),
@@ -115,13 +119,15 @@ public class ProductService {
         );
     }
 
+    @Transactional
     public void deleteProduct(Long productId) {
         if (productRepository.findById(productId).isEmpty()) {
             throw new IllegalArgumentException("Product(id: " + productId + ") not found");
         }
-        productRepository.delete(productId);
+        productRepository.deleteById(productId);
     }
 
+    @Transactional
     public List<ProductResponse> getAllProducts() {
         return productRepository.findAll().stream()
             .map(product -> new ProductResponse(

@@ -9,6 +9,7 @@ import gift.exception.DuplicateEmailException;
 import gift.exception.InvalidPasswordException;
 import gift.exception.MemberNotFoundException;
 import gift.repository.MemberRepository;
+import jakarta.transaction.Transactional;
 import java.util.Base64;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class MemberService {
         this.jwtUtil = jwtUtil;
     }
 
+    @Transactional
     public TokenResponse register(MemberRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Request cannot be null");
@@ -46,6 +48,7 @@ public class MemberService {
         return new TokenResponse(token);
     }
 
+    @Transactional
     public TokenResponse login(MemberRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Request cannot be null");
@@ -64,6 +67,7 @@ public class MemberService {
         return new TokenResponse(token);
     }
 
+    @Transactional
     public TokenResponse updateMember(MemberRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Request cannot be null");
@@ -86,19 +90,21 @@ public class MemberService {
             existingMember.getRole()
         );
 
-        updatedMember = memberRepository.update(updatedMember);
+        updatedMember = memberRepository.save(updatedMember);
         String token = jwtUtil.generateToken(updatedMember);
 
         return new TokenResponse(token);
     }
 
+    @Transactional
     public void deleteMember(String email) {
         if (memberRepository.findByEmail(email).isEmpty()) {
             throw new MemberNotFoundException("Member(email: " + email + " ) not found");
         }
-        memberRepository.delete(email);
+        memberRepository.deleteById(memberRepository.findByEmail(email).get().getId());
     }
 
+    @Transactional
     public MemberResponse getMember(String email) {
         Member member = memberRepository.findByEmail(email)
             .orElseThrow(
@@ -111,6 +117,7 @@ public class MemberService {
         );
     }
 
+    @Transactional
     public List<MemberResponse> getAllMembers() {
         return memberRepository.findAll().stream()
             .map(member -> new MemberResponse(
@@ -122,6 +129,7 @@ public class MemberService {
             .toList();
     }
 
+    @Transactional
     public Member getMemberToEntity(String email) {
         return memberRepository.findByEmail(email)
             .orElseThrow(
