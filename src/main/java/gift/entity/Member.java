@@ -58,6 +58,10 @@ public class Member {
         return wishItems;
     }
 
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     @Override
     public String toString() {
         return "Member(" + id + ") - email: " + email;
