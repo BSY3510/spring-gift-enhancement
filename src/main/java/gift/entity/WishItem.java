@@ -40,9 +40,7 @@ public class WishItem {
     }
 
     public WishItem(Product product, Integer quantity, Member member) {
-        this.product = product;
-        this.quantity = quantity;
-        this.member = member;
+        this(null, product, quantity, member);
     }
 
     public Long getId() {

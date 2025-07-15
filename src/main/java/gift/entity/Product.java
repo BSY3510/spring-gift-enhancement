@@ -34,9 +34,7 @@ public class Product {
     }
 
     public Product(String name, Integer price, String imageUrl) {
-        this.name = name;
-        this.price = price;
-        this.imageUrl = imageUrl;
+        this(null, name, price, imageUrl);
     }
 
     public Long getId() {
