@@ -27,7 +27,7 @@ public class WishService {
 
     @Transactional
     public List<WishResponse> getWishlist(Member member) {
-        List<WishItem> wishItems = wishItemRepository.findByMember(member);
+        List<WishItem> wishItems = member.getWishItems();
         return wishItems.stream()
             .map(item -> new WishResponse(
                 item.getId(),
