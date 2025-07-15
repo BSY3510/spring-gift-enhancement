@@ -48,7 +48,6 @@ public class MemberService {
         return new TokenResponse(token);
     }
 
-    @Transactional
     public TokenResponse login(MemberRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Request cannot be null");
@@ -104,7 +103,6 @@ public class MemberService {
         memberRepository.deleteById(memberRepository.findByEmail(email).get().getId());
     }
 
-    @Transactional
     public MemberResponse getMember(String email) {
         Member member = memberRepository.findByEmail(email)
             .orElseThrow(
@@ -117,7 +115,6 @@ public class MemberService {
         );
     }
 
-    @Transactional
     public List<MemberResponse> getAllMembers() {
         return memberRepository.findAll().stream()
             .map(member -> new MemberResponse(
@@ -129,7 +126,6 @@ public class MemberService {
             .toList();
     }
 
-    @Transactional
     public Member getMemberToEntity(String email) {
         return memberRepository.findByEmail(email)
             .orElseThrow(
