@@ -1,5 +1,6 @@
 package gift.entity;
 
+import gift.exception.InvalidPasswordException;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -8,6 +9,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 @Entity
@@ -58,8 +60,11 @@ public class Member {
         return wishItems;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void updatePassword(String newPassword) {
+        if (newPassword == null || newPassword.isEmpty()) {
+            throw new InvalidPasswordException("Password cannot be null or empty");
+        }
+        this.password = Base64.getEncoder().encodeToString(newPassword.getBytes());
     }
 
     @Override
