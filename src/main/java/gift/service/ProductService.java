@@ -62,7 +62,6 @@ public class ProductService {
         );
     }
 
-    @Transactional
     public ProductResponse getProduct(Long productId) {
         Product product = productRepository.findById(productId)
             .orElseThrow(
@@ -127,7 +126,6 @@ public class ProductService {
         productRepository.deleteById(productId);
     }
 
-    @Transactional
     public List<ProductResponse> getAllProducts() {
         return productRepository.findAll().stream()
             .map(product -> new ProductResponse(
