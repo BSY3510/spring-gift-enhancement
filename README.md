@@ -79,4 +79,7 @@
 | /api/wishes/{productId} | DELETE | 위시 리스트 상품 삭제 | JWT 토큰 인증 후 상품 삭제          |
 
 
-
+## 변경 사항
+- JPA 기반 리팩토링
+- @DataJpaTest를 통한 테스트
+- properties 추가

@@ -1,17 +1,40 @@
 package gift.entity;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "product")
 public class Product {
 
-    private final Long id;
-    private final String name;
-    private final Integer price;
-    private final String imageUrl;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+    private Integer price;
+    private String imageUrl;
+
+    @OneToMany(mappedBy = "product")
+    private List<WishItem> wishItems = new ArrayList<>();
+
+    protected Product() {}
 
     public Product(Long id, String name, Integer price, String imageUrl) {
         this.id = id;
         this.name = name;
         this.price = price;
         this.imageUrl = imageUrl;
+    }
+
+    public Product(String name, Integer price, String imageUrl) {
+        this(null, name, price, imageUrl);
     }
 
     public Long getId() {
@@ -28,6 +51,10 @@ public class Product {
 
     public String getImageUrl() {
         return imageUrl;
+    }
+
+    public List<WishItem> getWishItems() {
+        return wishItems;
     }
 
     @Override

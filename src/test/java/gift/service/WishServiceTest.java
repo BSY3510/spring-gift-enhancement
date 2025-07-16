@@ -73,7 +73,7 @@ public class WishServiceTest {
 
     @Test
     void getWishlistNormalCaseResponse() {
-        when(wishItemRepository.findByMember(member)).thenReturn(List.of(wishItem));
+        member.getWishItems().add(wishItem);
 
         List<WishResponse> result = wishService.getWishlist(member);
 
@@ -85,18 +85,14 @@ public class WishServiceTest {
         assertEquals(wishItem.getProduct().getName(), response.name());
         assertEquals(wishItem.getQuantity(), response.quantity());
         assertEquals(member.getId(), response.memberId());
-        verify(wishItemRepository, times(1)).findByMember(member);
     }
 
     @Test
     void getWishListNoItemsEmptyList() {
-        when(wishItemRepository.findByMember(member)).thenReturn(Collections.emptyList());
-
         List<WishResponse> result = wishService.getWishlist(member);
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
-        verify(wishItemRepository, times(1)).findByMember(member);
     }
 
     @Test
@@ -145,22 +141,22 @@ public class WishServiceTest {
     @Test
     void removeFromWishlistNormalCase() {
         Long wishId = 1L;
-        doNothing().when(wishItemRepository).deleteByIdAndMember(wishId, member);
+        doNothing().when(wishItemRepository).deleteByIdAndMemberId(wishId, member.getId());
 
         wishService.removeFromWishlist(wishId, member);
 
-        verify(wishItemRepository, times(1)).deleteByIdAndMember(wishId, member);
+        verify(wishItemRepository, times(1)).deleteByIdAndMemberId(wishId, member.getId());
     }
 
     @Test
     void removeFromWishlistNoProductException() {
         Long wishId = 1L;
         doThrow(new WishItemNotFoundException("WishItem not found")).when(wishItemRepository)
-            .deleteByIdAndMember(wishId, member);
+            .deleteByIdAndMemberId(wishId, member.getId());
 
         assertThrows(WishItemNotFoundException.class,
             () -> wishService.removeFromWishlist(wishId, member));
-        verify(wishItemRepository, times(1)).deleteByIdAndMember(wishId, member);
+        verify(wishItemRepository, times(1)).deleteByIdAndMemberId(wishId, member.getId());
     }
 
 }

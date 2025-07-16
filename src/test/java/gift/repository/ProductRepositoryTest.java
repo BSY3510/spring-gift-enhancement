@@ -1,106 +1,87 @@
 package gift.repository;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import gift.entity.Member;
 import gift.entity.Product;
+import gift.entity.WishItem;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@DataJpaTest
 @ActiveProfiles("test")
-@Transactional
 public class ProductRepositoryTest {
 
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private MemberRepository memberRepository;
+
+    @Autowired
+    private WishItemRepository wishItemRepository;
+
     private Product product;
+    private Member member;
+    private WishItem wishItem;
 
     @BeforeEach
     void setUp() {
-        product = new Product(1L, "Test Product", 1000, "http://test.com");
+        product = new Product("Test Product", 1000, "http://test.com");
+        product = productRepository.save(product);
+
+        member = new Member("test@test.com", "password123", "USER");
+        member = memberRepository.save(member);
+
+        wishItem = new WishItem(product, 2, member);
+        product.getWishItems().add(wishItem);
+        wishItem = wishItemRepository.save(wishItem);
     }
 
     @Test
-    void save_success() {
-        Product newProduct = new Product(null, "New Product", 500, "http://new.com");
-        Product savedProduct = productRepository.save(newProduct);
+    void save() {
+        Product savedProduct = productRepository.save(product);
 
-        assertNotNull(savedProduct.getId());
-        assertTrue(savedProduct.getId() > 1);
-        assertEquals("New Product", savedProduct.getName());
-        assertEquals(500, savedProduct.getPrice());
-        assertEquals("http://new.com", savedProduct.getImageUrl());
+        assertThat(savedProduct.getId()).isNotNull();
+        assertThat(savedProduct.getName()).isEqualTo("Test Product");
+        assertThat(savedProduct.getPrice()).isEqualTo(1000);
+        assertThat(savedProduct.getImageUrl()).isEqualTo("http://test.com");
     }
 
     @Test
-    void save_invalidField() {
-        Product invalidProduct = new Product(null, null, null, "http://test.com");
-        assertThrows(IllegalArgumentException.class, () -> productRepository.save(invalidProduct));
+    void findById() {
+        productRepository.save(product);
+        Optional<Product> foundProduct = productRepository.findById(product.getId());
+
+        assertThat(foundProduct).isPresent();
+        assertThat(foundProduct.get().getName()).isEqualTo("Test Product");
     }
 
     @Test
-    void update_success() {
-        Product updatedProduct = new Product(1L, "Updated Product", 1500, "http://updated.com");
-        Product result = productRepository.update(updatedProduct);
+    void findByIdWithWishItems() {
+        Product foundProduct = productRepository.findById(product.getId())
+            .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        assertEquals("Updated Product", result.getName());
-        assertEquals(1500, result.getPrice());
-        assertEquals("http://updated.com", result.getImageUrl());
-
-        Optional<Product> verifiedProduct = productRepository.findById(1L);
-        assertTrue(verifiedProduct.isPresent());
-        assertEquals("Updated Product", verifiedProduct.get().getName());
+        List<WishItem> wishItems = foundProduct.getWishItems();
+        assertThat(wishItems).isNotEmpty();
+        assertThat(wishItems).hasSize(1);
+        assertThat(wishItems.getFirst().getProduct()).isEqualTo(foundProduct);
+        assertThat(wishItems.getFirst().getMember()).isEqualTo(member);
+        assertThat(wishItems.getFirst().getQuantity()).isEqualTo(2);
     }
 
     @Test
-    void update_notFound() {
-        Product invalidProduct = new Product(999L, "Nonexistent", 100, "http://test.com");
-        assertThrows(IllegalArgumentException.class,
-            () -> productRepository.update(invalidProduct));
-    }
+    void deleteById() {
+        Product savedProduct = productRepository.save(product);
+        productRepository.deleteById(savedProduct.getId());
+        Optional<Product> deletedProduct = productRepository.findById(savedProduct.getId());
 
-    @Test
-    void findById_success() {
-        Optional<Product> foundProduct = productRepository.findById(1L);
-        assertTrue(foundProduct.isPresent());
-        assertEquals("Test Product", foundProduct.get().getName());
-    }
-
-    @Test
-    void findById_notFound() {
-        Optional<Product> foundProduct = productRepository.findById(999L);
-        assertTrue(foundProduct.isEmpty());
-    }
-
-    @Test
-    void delete_success() {
-        assertDoesNotThrow(() -> productRepository.delete(123L));
-        Optional<Product> deletedProduct = productRepository.findById(123L);
-        assertTrue(deletedProduct.isEmpty());
-    }
-
-    @Test
-    void delete_notFound() {
-        assertThrows(IllegalArgumentException.class, () -> productRepository.delete(999L));
-    }
-
-    @Test
-    void findAll_success() {
-        List<Product> products = productRepository.findAll();
-        assertFalse(products.isEmpty());
-        assertEquals(2, products.size());
-        assertEquals("Test Product", products.get(0).getName());
+        assertThat(deletedProduct).isEmpty();
     }
 }

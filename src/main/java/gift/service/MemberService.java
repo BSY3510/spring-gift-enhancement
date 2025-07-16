@@ -9,6 +9,7 @@ import gift.exception.DuplicateEmailException;
 import gift.exception.InvalidPasswordException;
 import gift.exception.MemberNotFoundException;
 import gift.repository.MemberRepository;
+import jakarta.transaction.Transactional;
 import java.util.Base64;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class MemberService {
         this.jwtUtil = jwtUtil;
     }
 
+    @Transactional
     public TokenResponse register(MemberRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Request cannot be null");
@@ -64,39 +66,33 @@ public class MemberService {
         return new TokenResponse(token);
     }
 
+    @Transactional
     public TokenResponse updateMember(MemberRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Request cannot be null");
         }
 
         String email = request.email();
-        Member existingMember = memberRepository.findByEmail(email)
+        Member member = memberRepository.findByEmail(email)
             .orElseThrow(
                 () -> new MemberNotFoundException("Member(email: " + email + " ) not found"));
 
-        String password = existingMember.getPassword();
         if (request.password() != null && !request.password().isEmpty()) {
-            password = Base64.getEncoder().encodeToString(request.password().getBytes());
+            String password = Base64.getEncoder().encodeToString(request.password().getBytes());
+            member.setPassword(password);
         }
 
-        Member updatedMember = new Member(
-            existingMember.getId(),
-            existingMember.getEmail(),
-            password,
-            existingMember.getRole()
-        );
-
-        updatedMember = memberRepository.update(updatedMember);
-        String token = jwtUtil.generateToken(updatedMember);
+        String token = jwtUtil.generateToken(member);
 
         return new TokenResponse(token);
     }
 
+    @Transactional
     public void deleteMember(String email) {
         if (memberRepository.findByEmail(email).isEmpty()) {
             throw new MemberNotFoundException("Member(email: " + email + " ) not found");
         }
-        memberRepository.delete(email);
+        memberRepository.deleteById(memberRepository.findByEmail(email).get().getId());
     }
 
     public MemberResponse getMember(String email) {
