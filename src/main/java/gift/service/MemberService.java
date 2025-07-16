@@ -78,8 +78,7 @@ public class MemberService {
                 () -> new MemberNotFoundException("Member(email: " + email + " ) not found"));
 
         if (request.password() != null && !request.password().isEmpty()) {
-            String password = Base64.getEncoder().encodeToString(request.password().getBytes());
-            member.setPassword(password);
+            member.updatePassword(request.password());
         }
 
         String token = jwtUtil.generateToken(member);
@@ -89,10 +88,13 @@ public class MemberService {
 
     @Transactional
     public void deleteMember(String email) {
-        if (memberRepository.findByEmail(email).isEmpty()) {
-            throw new MemberNotFoundException("Member(email: " + email + " ) not found");
+        Member member = memberRepository.findByEmail(email)
+            .orElseThrow(
+                () -> new MemberNotFoundException("Member(email: " + email + " ) not found"));
+
+        if (member != null) {
+            memberRepository.deleteById(member.getId());
         }
-        memberRepository.deleteById(memberRepository.findByEmail(email).get().getId());
     }
 
     public MemberResponse getMember(String email) {
