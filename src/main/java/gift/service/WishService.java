@@ -25,7 +25,6 @@ public class WishService {
         this.productRepository = productRepository;
     }
 
-    @Transactional
     public List<WishResponse> getWishlist(Member member) {
         List<WishItem> wishItems = member.getWishItems();
         return wishItems.stream()
@@ -67,7 +66,7 @@ public class WishService {
     public void removeFromWishlist(Long wishId, Member member) {
         ValidationUtil.validatePIDAndMember(wishId, member);
 
-        wishItemRepository.deleteByIdAndMemberId(wishId, member.getId());
+        wishItemRepository.deleteById(wishId);
     }
 
 }
