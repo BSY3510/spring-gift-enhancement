@@ -12,6 +12,8 @@ import gift.repository.MemberRepository;
 import jakarta.transaction.Transactional;
 import java.util.Base64;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -118,6 +120,16 @@ public class MemberService {
                 member.getRole()
             ))
             .toList();
+    }
+
+    public Page<MemberResponse> getAllMembersPaged(Pageable pageable) {
+        return memberRepository.findAll(pageable)
+            .map(member -> new MemberResponse(
+                member.getId(),
+                member.getEmail(),
+                member.getPassword(),
+                member.getRole()
+            ));
     }
 
     public Member getMemberToEntity(String email) {
