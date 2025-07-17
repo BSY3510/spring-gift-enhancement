@@ -7,6 +7,8 @@ import gift.repository.ProductRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -136,4 +138,15 @@ public class ProductService {
             ))
             .toList();
     }
+
+    public Page<ProductResponse> getAllProductsPaged(Pageable pageable) {
+        return productRepository.findAll(pageable)
+            .map(product -> new ProductResponse(
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getImageUrl()
+            ));
+    }
+
 }
