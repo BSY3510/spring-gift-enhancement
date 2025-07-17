@@ -1,18 +1,21 @@
 package gift.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import gift.dto.ProductResponse;
 import gift.entity.Member;
 import gift.entity.Product;
 import gift.entity.WishItem;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -84,4 +87,26 @@ public class ProductRepositoryTest {
 
         assertThat(deletedProduct).isEmpty();
     }
+
+    @Test
+    void findAllPaged() {
+        for (int i = 2; i <= 15; i++) {
+            productRepository.save(new Product("Product" + i, 1000, "test.com"));
+        }
+
+        Pageable pageable = PageRequest.of(0, 5);
+        Page<ProductResponse> page = productRepository.findAll(pageable)
+            .map(product -> new ProductResponse(
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getImageUrl()
+            ));
+
+        assertThat(page.getContent()).hasSize(5);
+        assertThat(page.getTotalPages()).isEqualTo(3);
+        assertThat(page.getNumber()).isEqualTo(0);
+        assertThat(page.getContent().getFirst().name()).startsWith("Test Product");
+    }
+
 }
