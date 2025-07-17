@@ -12,6 +12,8 @@ import gift.validation.ValidationUtil;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -36,6 +38,17 @@ public class WishService {
                 member.getId()
             ))
             .collect(Collectors.toList());
+    }
+
+    public Page<WishResponse> getWishlistPaged(Long memberId, Pageable pageable) {
+        return wishItemRepository.findAllByMemberId(memberId, pageable)
+            .map(wishItem -> new WishResponse(
+                wishItem.getId(),
+                wishItem.getProduct().getId(),
+                wishItem.getProduct().getName(),
+                wishItem.getQuantity(),
+                wishItem.getMember().getId()
+            ));
     }
 
     @Transactional
