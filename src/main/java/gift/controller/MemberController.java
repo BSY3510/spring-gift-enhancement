@@ -4,10 +4,10 @@ import gift.config.JwtUtil;
 import gift.config.LoginMember;
 import gift.dto.MemberRequest;
 import gift.dto.MemberResponse;
+import gift.dto.PaginationResponse;
 import gift.dto.TokenResponse;
 import gift.entity.Member;
 import gift.service.MemberService;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -73,7 +73,7 @@ public class MemberController {
     }
 
     @GetMapping
-    public Page<MemberResponse> getAllMembersPaged(
+    public PaginationResponse<MemberResponse> getAllMembersPaged(
         @LoginMember
         Member member,
         @PageableDefault(size = 10, sort = "email")

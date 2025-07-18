@@ -1,9 +1,9 @@
 package gift.controller;
 
+import gift.dto.PaginationResponse;
 import gift.dto.ProductRequest;
 import gift.dto.ProductResponse;
 import gift.service.ProductService;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -71,7 +71,7 @@ public class ProductController {
     }
 
     @GetMapping
-    public Page<ProductResponse> getAllProductsPaged(
+    public PaginationResponse<ProductResponse> getAllProductsPaged(
         @PageableDefault(size = 10, sort = "name")
         Pageable pageable
     ) {

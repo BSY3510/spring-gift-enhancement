@@ -1,11 +1,11 @@
 package gift.controller;
 
 import gift.config.LoginMember;
+import gift.dto.PaginationResponse;
 import gift.dto.WishRequest;
 import gift.dto.WishResponse;
 import gift.entity.Member;
 import gift.service.WishService;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -30,7 +30,7 @@ public class WishController {
     }
 
     @GetMapping
-    public Page<WishResponse> getWishlistPaged(
+    public PaginationResponse<WishResponse> getWishlistPaged(
         @LoginMember
         Member member,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC)
