@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import gift.config.JwtUtil;
 import gift.dto.MemberRequest;
 import gift.dto.MemberResponse;
+import gift.dto.PaginationResponse;
 import gift.dto.TokenResponse;
 import gift.entity.Member;
 import gift.exception.DuplicateEmailException;
@@ -24,6 +25,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 public class MemberServiceTest {
 
@@ -264,6 +269,28 @@ public class MemberServiceTest {
         List<MemberResponse> responses = memberService.getAllMembers();
 
         assertThat(responses).containsExactly(expectedResponse);
+    }
+
+    @Test
+    void getAllMembersPagedNormalCase() {
+        List<Member> members = List.of(
+            new Member("test1@test.com", "password", "USER"),
+            new Member("test2@test.com", "password", "USER"),
+            new Member("test3@test.com", "password", "USER"),
+            new Member("test4@test.com", "password", "USER"),
+            new Member("test5@test.com", "password", "USER")
+        );
+        Pageable pageable = PageRequest.of(0, 5);
+        Page<Member> page = new PageImpl<>(members, pageable, 15L);
+        when(memberRepository.findAll(pageable)).thenReturn(page);
+
+        PaginationResponse<MemberResponse> response = memberService.getAllMembersPaged(pageable);
+
+        assertThat(response.content()).hasSize(5);
+        assertThat(response.totalPages()).isEqualTo(3);
+        assertThat(response.currentPages()).isEqualTo(0);
+        assertThat(response.content().getFirst().email()).isEqualTo("test1@test.com");
+        verify(memberRepository).findAll(pageable);
     }
 
 }

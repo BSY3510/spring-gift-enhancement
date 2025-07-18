@@ -1,5 +1,6 @@
 package gift.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import gift.dto.PaginationResponse;
 import gift.dto.WishRequest;
 import gift.dto.WishResponse;
 import gift.entity.Member;
@@ -23,7 +25,6 @@ import gift.exception.ProductNotFoundException;
 import gift.exception.WishItemNotFoundException;
 import gift.repository.ProductRepository;
 import gift.repository.WishItemRepository;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 public class WishServiceTest {
@@ -141,22 +146,45 @@ public class WishServiceTest {
     @Test
     void removeFromWishlistNormalCase() {
         Long wishId = 1L;
-        doNothing().when(wishItemRepository).deleteByIdAndMemberId(wishId, member.getId());
+        doNothing().when(wishItemRepository).deleteById(wishId);
 
         wishService.removeFromWishlist(wishId, member);
 
-        verify(wishItemRepository, times(1)).deleteByIdAndMemberId(wishId, member.getId());
+        verify(wishItemRepository, times(1)).deleteById(wishId);
     }
 
     @Test
     void removeFromWishlistNoProductException() {
         Long wishId = 1L;
         doThrow(new WishItemNotFoundException("WishItem not found")).when(wishItemRepository)
-            .deleteByIdAndMemberId(wishId, member.getId());
+            .deleteById(wishId);
 
         assertThrows(WishItemNotFoundException.class,
             () -> wishService.removeFromWishlist(wishId, member));
-        verify(wishItemRepository, times(1)).deleteByIdAndMemberId(wishId, member.getId());
+        verify(wishItemRepository, times(1)).deleteById(wishId);
+    }
+
+    @Test
+    void getWishlistPagedNormalCase() {
+        List<WishItem> wishItems = List.of(
+            new WishItem(1L, product, 5, member),
+            new WishItem(2L, product, 4, member),
+            new WishItem(3L, product, 3, member),
+            new WishItem(4L, product, 2, member),
+            new WishItem(5L, product, 1, member)
+        );
+        Pageable pageable = PageRequest.of(0, 5);
+        Page<WishItem> page = new PageImpl<>(wishItems, pageable, 15L);
+        when(wishItemRepository.findAllByMemberId(member.getId(), pageable)).thenReturn(page);
+
+        PaginationResponse<WishResponse> response = wishService.getWishlistPaged(member.getId(),
+            pageable);
+
+        assertThat(response.content()).hasSize(5);
+        assertThat(response.totalPages()).isEqualTo(3);
+        assertThat(response.currentPages()).isEqualTo(0);
+        assertThat(response.content().getFirst().name()).isEqualTo("test product");
+        verify(wishItemRepository).findAllByMemberId(member.getId(), pageable);
     }
 
 }
