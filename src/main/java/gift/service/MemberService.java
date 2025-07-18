@@ -3,6 +3,7 @@ package gift.service;
 import gift.config.JwtUtil;
 import gift.dto.MemberRequest;
 import gift.dto.MemberResponse;
+import gift.dto.PaginationResponse;
 import gift.dto.TokenResponse;
 import gift.entity.Member;
 import gift.exception.DuplicateEmailException;
@@ -12,6 +13,7 @@ import gift.repository.MemberRepository;
 import jakarta.transaction.Transactional;
 import java.util.Base64;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -94,9 +96,7 @@ public class MemberService {
             .orElseThrow(
                 () -> new MemberNotFoundException("Member(email: " + email + " ) not found"));
 
-        if (member != null) {
-            memberRepository.deleteById(member.getId());
-        }
+        memberRepository.deleteById(member.getId());
     }
 
     public MemberResponse getMember(String email) {
@@ -122,14 +122,24 @@ public class MemberService {
             .toList();
     }
 
-    public Page<MemberResponse> getAllMembersPaged(Pageable pageable) {
-        return memberRepository.findAll(pageable)
+    public PaginationResponse<MemberResponse> getAllMembersPaged(Pageable pageable) {
+        Page<Member> page = memberRepository.findAll(pageable);
+        List<MemberResponse> content = page.getContent().stream()
             .map(member -> new MemberResponse(
                 member.getId(),
                 member.getEmail(),
                 member.getPassword(),
                 member.getRole()
-            ));
+            ))
+            .collect(Collectors.toList());
+
+        return new PaginationResponse<>(
+            content,
+            page.getTotalPages(),
+            page.getNumber(),
+            page.getSize(),
+            page.getTotalElements()
+        );
     }
 
     public Member getMemberToEntity(String email) {

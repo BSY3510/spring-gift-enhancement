@@ -1,5 +1,6 @@
 package gift.service;
 
+import gift.dto.PaginationResponse;
 import gift.dto.WishRequest;
 import gift.dto.WishResponse;
 import gift.entity.Member;
@@ -40,15 +41,25 @@ public class WishService {
             .collect(Collectors.toList());
     }
 
-    public Page<WishResponse> getWishlistPaged(Long memberId, Pageable pageable) {
-        return wishItemRepository.findAllByMemberId(memberId, pageable)
+    public PaginationResponse<WishResponse> getWishlistPaged(Long memberId, Pageable pageable) {
+        Page<WishItem> page = wishItemRepository.findAllByMemberId(memberId, pageable);
+        List<WishResponse> content = page.getContent().stream()
             .map(wishItem -> new WishResponse(
                 wishItem.getId(),
                 wishItem.getProduct().getId(),
                 wishItem.getProduct().getName(),
                 wishItem.getQuantity(),
                 wishItem.getMember().getId()
-            ));
+            ))
+            .collect(Collectors.toList());
+
+        return new PaginationResponse<>(
+            content,
+            page.getTotalPages(),
+            page.getNumber(),
+            page.getSize(),
+            page.getTotalElements()
+        );
     }
 
     @Transactional
