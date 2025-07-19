@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import gift.config.JwtUtil;
 import gift.dto.MemberRequest;
 import gift.dto.MemberResponse;
+import gift.dto.PaginationResponse;
 import gift.dto.TokenResponse;
 import gift.entity.Member;
 import gift.exception.DuplicateEmailException;
@@ -24,6 +25,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 public class MemberServiceTest {
 
@@ -147,30 +152,34 @@ public class MemberServiceTest {
     void updateMemberNormalCaseTokenResponse() {
         MemberRequest request = new MemberRequest(
             "test@test.com",
-            "password123",
+            "newpassword123",
             "USER"
         );
         Member existingMember = new Member(
             1L,
             "test@test.com",
-            "password123",
+            Base64.getEncoder().encodeToString("password123".getBytes()),
             "USER"
         );
+        existingMember.updatePassword("newpassword123");
         Member updatedMember = new Member(
             1L,
             "test@test.com",
-            "newpassword123",
+            Base64.getEncoder().encodeToString("newpassword123".getBytes()),
             "USER"
         );
         when(memberRepository.findByEmail("test@test.com")).thenReturn(Optional.of(existingMember));
-        when(memberRepository.save(any(Member.class))).thenReturn(updatedMember);
-        when(jwtUtil.generateToken(updatedMember)).thenReturn("mocked-token");
+        when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> {
+            Member savedMember = invocation.getArgument(0);
+            assertThat(savedMember.getPassword()).isEqualTo(updatedMember.getPassword());
+            return updatedMember;
+        });
+        when(jwtUtil.generateToken(any(Member.class))).thenReturn("mocked-token");
 
         TokenResponse response = memberService.updateMember(request);
 
         assertThat(response.token()).isEqualTo("mocked-token");
-        verify(memberRepository).save(any(Member.class));
-        verify(jwtUtil).generateToken(updatedMember);
+        verify(jwtUtil).generateToken(existingMember);
     }
 
     @Test
@@ -264,6 +273,28 @@ public class MemberServiceTest {
         List<MemberResponse> responses = memberService.getAllMembers();
 
         assertThat(responses).containsExactly(expectedResponse);
+    }
+
+    @Test
+    void getAllMembersPagedNormalCase() {
+        List<Member> members = List.of(
+            new Member("test1@test.com", "password", "USER"),
+            new Member("test2@test.com", "password", "USER"),
+            new Member("test3@test.com", "password", "USER"),
+            new Member("test4@test.com", "password", "USER"),
+            new Member("test5@test.com", "password", "USER")
+        );
+        Pageable pageable = PageRequest.of(0, 5);
+        Page<Member> page = new PageImpl<>(members, pageable, 15L);
+        when(memberRepository.findAll(pageable)).thenReturn(page);
+
+        PaginationResponse<MemberResponse> response = memberService.getAllMembersPaged(pageable);
+
+        assertThat(response.content()).hasSize(5);
+        assertThat(response.totalPages()).isEqualTo(3);
+        assertThat(response.currentPages()).isEqualTo(0);
+        assertThat(response.content().getFirst().email()).isEqualTo("test1@test.com");
+        verify(memberRepository).findAll(pageable);
     }
 
 }

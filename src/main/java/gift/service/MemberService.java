@@ -3,6 +3,7 @@ package gift.service;
 import gift.config.JwtUtil;
 import gift.dto.MemberRequest;
 import gift.dto.MemberResponse;
+import gift.dto.PaginationResponse;
 import gift.dto.TokenResponse;
 import gift.entity.Member;
 import gift.exception.DuplicateEmailException;
@@ -12,6 +13,9 @@ import gift.repository.MemberRepository;
 import jakarta.transaction.Transactional;
 import java.util.Base64;
 import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -78,8 +82,7 @@ public class MemberService {
                 () -> new MemberNotFoundException("Member(email: " + email + " ) not found"));
 
         if (request.password() != null && !request.password().isEmpty()) {
-            String password = Base64.getEncoder().encodeToString(request.password().getBytes());
-            member.setPassword(password);
+            member.updatePassword(request.password());
         }
 
         String token = jwtUtil.generateToken(member);
@@ -89,10 +92,11 @@ public class MemberService {
 
     @Transactional
     public void deleteMember(String email) {
-        if (memberRepository.findByEmail(email).isEmpty()) {
-            throw new MemberNotFoundException("Member(email: " + email + " ) not found");
-        }
-        memberRepository.deleteById(memberRepository.findByEmail(email).get().getId());
+        Member member = memberRepository.findByEmail(email)
+            .orElseThrow(
+                () -> new MemberNotFoundException("Member(email: " + email + " ) not found"));
+
+        memberRepository.deleteById(member.getId());
     }
 
     public MemberResponse getMember(String email) {
@@ -116,6 +120,26 @@ public class MemberService {
                 member.getRole()
             ))
             .toList();
+    }
+
+    public PaginationResponse<MemberResponse> getAllMembersPaged(Pageable pageable) {
+        Page<Member> page = memberRepository.findAll(pageable);
+        List<MemberResponse> content = page.getContent().stream()
+            .map(member -> new MemberResponse(
+                member.getId(),
+                member.getEmail(),
+                member.getPassword(),
+                member.getRole()
+            ))
+            .collect(Collectors.toList());
+
+        return new PaginationResponse<>(
+            content,
+            page.getTotalPages(),
+            page.getNumber(),
+            page.getSize(),
+            page.getTotalElements()
+        );
     }
 
     public Member getMemberToEntity(String email) {

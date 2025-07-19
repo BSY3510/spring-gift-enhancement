@@ -1,5 +1,6 @@
 package gift.service;
 
+import gift.dto.PaginationResponse;
 import gift.dto.WishRequest;
 import gift.dto.WishResponse;
 import gift.entity.Member;
@@ -12,6 +13,8 @@ import gift.validation.ValidationUtil;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,7 +28,6 @@ public class WishService {
         this.productRepository = productRepository;
     }
 
-    @Transactional
     public List<WishResponse> getWishlist(Member member) {
         List<WishItem> wishItems = member.getWishItems();
         return wishItems.stream()
@@ -37,6 +39,27 @@ public class WishService {
                 member.getId()
             ))
             .collect(Collectors.toList());
+    }
+
+    public PaginationResponse<WishResponse> getWishlistPaged(Long memberId, Pageable pageable) {
+        Page<WishItem> page = wishItemRepository.findAllByMemberId(memberId, pageable);
+        List<WishResponse> content = page.getContent().stream()
+            .map(wishItem -> new WishResponse(
+                wishItem.getId(),
+                wishItem.getProduct().getId(),
+                wishItem.getProduct().getName(),
+                wishItem.getQuantity(),
+                wishItem.getMember().getId()
+            ))
+            .collect(Collectors.toList());
+
+        return new PaginationResponse<>(
+            content,
+            page.getTotalPages(),
+            page.getNumber(),
+            page.getSize(),
+            page.getTotalElements()
+        );
     }
 
     @Transactional
@@ -67,7 +90,7 @@ public class WishService {
     public void removeFromWishlist(Long wishId, Member member) {
         ValidationUtil.validatePIDAndMember(wishId, member);
 
-        wishItemRepository.deleteByIdAndMemberId(wishId, member.getId());
+        wishItemRepository.deleteById(wishId);
     }
 
 }

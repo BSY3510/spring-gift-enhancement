@@ -1,8 +1,11 @@
 package gift.controller;
 
+import gift.dto.PaginationResponse;
 import gift.dto.ProductRequest;
 import gift.dto.ProductResponse;
 import gift.service.ProductService;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -68,12 +71,11 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllProducts() {
-        try {
-            return new ResponseEntity<>(productService.getAllProducts(), HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
+    public PaginationResponse<ProductResponse> getAllProductsPaged(
+        @PageableDefault(size = 10, sort = "name")
+        Pageable pageable
+    ) {
+        return productService.getAllProductsPaged(pageable);
     }
 
 }

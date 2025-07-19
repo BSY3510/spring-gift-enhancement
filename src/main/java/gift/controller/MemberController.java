@@ -4,10 +4,12 @@ import gift.config.JwtUtil;
 import gift.config.LoginMember;
 import gift.dto.MemberRequest;
 import gift.dto.MemberResponse;
+import gift.dto.PaginationResponse;
 import gift.dto.TokenResponse;
 import gift.entity.Member;
 import gift.service.MemberService;
-import java.util.List;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -71,11 +73,13 @@ public class MemberController {
     }
 
     @GetMapping
-    public ResponseEntity<List<MemberResponse>> getAllMembers(
-        @LoginMember Member member
+    public PaginationResponse<MemberResponse> getAllMembersPaged(
+        @LoginMember
+        Member member,
+        @PageableDefault(size = 10, sort = "email")
+        Pageable pageable
     ) {
-        List<MemberResponse> responses = memberService.getAllMembers();
-        return new ResponseEntity<>(responses, HttpStatus.OK);
+        return memberService.getAllMembersPaged(pageable);
     }
 
 }

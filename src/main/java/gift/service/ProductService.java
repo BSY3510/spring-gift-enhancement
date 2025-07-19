@@ -1,5 +1,6 @@
 package gift.service;
 
+import gift.dto.PaginationResponse;
 import gift.dto.ProductRequest;
 import gift.dto.ProductResponse;
 import gift.entity.Product;
@@ -7,6 +8,9 @@ import gift.repository.ProductRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -62,7 +66,6 @@ public class ProductService {
         );
     }
 
-    @Transactional
     public ProductResponse getProduct(Long productId) {
         Product product = productRepository.findById(productId)
             .orElseThrow(
@@ -127,7 +130,6 @@ public class ProductService {
         productRepository.deleteById(productId);
     }
 
-    @Transactional
     public List<ProductResponse> getAllProducts() {
         return productRepository.findAll().stream()
             .map(product -> new ProductResponse(
@@ -138,4 +140,25 @@ public class ProductService {
             ))
             .toList();
     }
+
+    public PaginationResponse<ProductResponse> getAllProductsPaged(Pageable pageable) {
+        Page<Product> page = productRepository.findAll(pageable);
+        List<ProductResponse> content = page.getContent().stream()
+            .map(product -> new ProductResponse(
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getImageUrl()
+            ))
+            .collect(Collectors.toList());
+
+        return new PaginationResponse<>(
+            content,
+            page.getTotalPages(),
+            page.getNumber(),
+            page.getSize(),
+            page.getTotalElements()
+        );
+    }
+
 }

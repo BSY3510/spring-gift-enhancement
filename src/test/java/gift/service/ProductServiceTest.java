@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import gift.dto.PaginationResponse;
 import gift.dto.ProductRequest;
 import gift.dto.ProductResponse;
 import gift.entity.Product;
@@ -18,6 +19,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 public class ProductServiceTest {
 
@@ -227,6 +232,28 @@ public class ProductServiceTest {
         assertThat(responses.get(0).name()).isEqualTo("test product1");
         assertThat(responses.get(1).name()).isEqualTo("test product2");
         verify(productRepository).findAll();
+    }
+
+    @Test
+    void getAllProductsPagedNormalCase() {
+        List<Product> products = List.of(
+            new Product(1L, "Product 1", 1000, "test.com"),
+            new Product(2L, "Product 2", 1500, "test.com"),
+            new Product(3L, "Product 3", 2000, "test.com"),
+            new Product(4L, "Product 4", 2500, "test.com"),
+            new Product(5L, "Product 5", 3000, "test.com")
+        );
+        Pageable pageable = PageRequest.of(0, 5);
+        Page<Product> page = new PageImpl<>(products, pageable, 15L);
+        when(productRepository.findAll(pageable)).thenReturn(page);
+
+        PaginationResponse<ProductResponse> response = productService.getAllProductsPaged(pageable);
+
+        assertThat(response.content()).hasSize(5);
+        assertThat(response.totalPages()).isEqualTo(3);
+        assertThat(response.currentPages()).isEqualTo(0);
+        assertThat(response.content().getFirst().name()).isEqualTo("Product 1");
+        verify(productRepository).findAll(pageable);
     }
 
 }
