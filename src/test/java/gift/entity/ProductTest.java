@@ -20,7 +20,7 @@ public class ProductTest {
     @Test
     void addOptionValidCase() {
         product.addOption("Best1", 100);
-        Option option = product.getOptions().get(0);
+        Option option = product.getOptions().get(1);
         assertThat(option.getName()).isEqualTo("Best1");
         assertThat(option.getQuantity()).isEqualTo(100);
     }

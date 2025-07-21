@@ -40,8 +40,8 @@ public class ProductControllerTest {
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         List<OptionResponse> options = response.getBody();
-        assertThat(options).hasSize(1);
-        OptionResponse optionResponse = options.get(0);
+        assertThat(options).hasSize(2);
+        OptionResponse optionResponse = options.get(1);
         assertThat(optionResponse.id()).isEqualTo(option.getId());
         assertThat(optionResponse.name()).isEqualTo(optionName);
         assertThat(optionResponse.quantity()).isEqualTo(100);
