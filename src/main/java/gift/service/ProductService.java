@@ -1,10 +1,13 @@
 package gift.service;
 
+import gift.dto.OptionResponse;
 import gift.dto.PaginationResponse;
+import gift.dto.ProductOptionResponse;
 import gift.dto.ProductRequest;
 import gift.dto.ProductResponse;
 import gift.entity.Product;
 import gift.repository.ProductRepository;
+import gift.validation.ValidationUtil;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
@@ -17,30 +20,11 @@ import org.springframework.stereotype.Service;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final OptionService optionService;
 
-    public ProductService(ProductRepository productRepository) {
+    public ProductService(ProductRepository productRepository, OptionService optionService) {
         this.productRepository = productRepository;
-    }
-
-    private void validateProductRequest(ProductRequest request) {
-        if (request == null) {
-            throw new IllegalArgumentException("Request cannot be null");
-        }
-        if (request.name() == null) {
-            throw new IllegalArgumentException("상품명은 필수입니다.");
-        }
-        if (request.name().length() > 15) {
-            throw new IllegalArgumentException("상품 이름은 최대 15자까지 입력 가능합니다.");
-        }
-        if (!request.name().matches("^[a-zA-Z0-9\\s\\(\\)\\[\\]\\+\\-&/_\\uAC00-\\uD7AF]+$")) {
-            throw new IllegalArgumentException("허용되지 않은 특수 문자가 포함되었습니다.");
-        }
-        if (request.name().contains("카카오")) {
-            throw new IllegalArgumentException("상품명에 '카카오'가 포함되었습니다. 담당자와 협의가 필요합니다.");
-        }
-        if (request.price() == null) {
-            throw new IllegalArgumentException("가격은 필수입니다.");
-        }
+        this.optionService = optionService;
     }
 
     @Transactional
@@ -49,7 +33,7 @@ public class ProductService {
             throw new IllegalArgumentException("Request cannot be null");
         }
 
-        validateProductRequest(request);
+        ValidationUtil.validateProductRequest(request);
 
         Product product = new Product(
             null,
@@ -78,13 +62,19 @@ public class ProductService {
         );
     }
 
+    public Product getProductToEntity(Long productId) {
+        return productRepository.findById(productId)
+            .orElseThrow(
+                () -> new IllegalArgumentException("Product(id: " + productId + ") not found"));
+    }
+
     @Transactional
     public ProductResponse updateProduct(Long productId, ProductRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Request cannot be null");
         }
 
-        validateProductRequest(request);
+        ValidationUtil.validateProductRequest(request);
 
         Optional<Product> product = productRepository.findById(productId);
         if (product.isEmpty()) {
@@ -141,6 +131,11 @@ public class ProductService {
             .toList();
     }
 
+    @Transactional
+    public void subtractOptionQuantity(Long optionId, Integer quantity) {
+        optionService.subtractOptionQuantity(optionId, quantity);
+    }
+
     public PaginationResponse<ProductResponse> getAllProductsPaged(Pageable pageable) {
         Page<Product> page = productRepository.findAll(pageable);
         List<ProductResponse> content = page.getContent().stream()
@@ -149,6 +144,33 @@ public class ProductService {
                 product.getName(),
                 product.getPrice(),
                 product.getImageUrl()
+            ))
+            .collect(Collectors.toList());
+
+        return new PaginationResponse<>(
+            content,
+            page.getTotalPages(),
+            page.getNumber(),
+            page.getSize(),
+            page.getTotalElements()
+        );
+    }
+
+    public PaginationResponse<ProductOptionResponse> getAllProductsWithOptionPaged(
+        Pageable pageable) {
+        Page<Product> page = productRepository.findAll(pageable);
+        List<ProductOptionResponse> content = page.getContent().stream()
+            .map(product -> new ProductOptionResponse(
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getImageUrl(),
+                product.getOptions().stream()
+                    .map(option -> new OptionResponse(
+                        option.getId(),
+                        option.getName(),
+                        option.getQuantity()
+                    )).collect(Collectors.toList())
             ))
             .collect(Collectors.toList());
 
