@@ -5,7 +5,9 @@ import gift.dto.PaginationResponse;
 import gift.dto.ProductOptionResponse;
 import gift.dto.ProductRequest;
 import gift.dto.ProductResponse;
+import gift.entity.Option;
 import gift.entity.Product;
+import gift.repository.OptionRepository;
 import gift.repository.ProductRepository;
 import gift.validation.ValidationUtil;
 import jakarta.transaction.Transactional;
@@ -20,10 +22,13 @@ import org.springframework.stereotype.Service;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final OptionRepository optionRepository;
     private final OptionService optionService;
 
-    public ProductService(ProductRepository productRepository, OptionService optionService) {
+    public ProductService(ProductRepository productRepository, OptionRepository optionRepository,
+        OptionService optionService) {
         this.productRepository = productRepository;
+        this.optionRepository = optionRepository;
         this.optionService = optionService;
     }
 
@@ -42,6 +47,8 @@ public class ProductService {
             request.imageUrl()
         );
         product = productRepository.save(product);
+        Option option = product.getOptions().getFirst();
+        option = optionRepository.save(option);
         return new ProductResponse(
             product.getId(),
             product.getName(),
